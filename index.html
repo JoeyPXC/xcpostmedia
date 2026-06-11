@@ -1,11 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cross Country Tweets & Grams Builder</title>
+    <title>Cross Country Social Media Post Generator</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Imports -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Impact&family=Oswald:wght@500;700&family=Roboto:ital,wght@0,400;0,700;0,900;1,400&family=Zilla+Slab:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
     <style>
         body { -webkit-tap-highlight-color: transparent; }
     </style>
@@ -14,15 +18,19 @@
 
     <div class="max-w-7xl mx-auto">
         
-        <header class="mb-5 text-center max-w-xl mx-auto">
-            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-amber-400 flex items-center justify-center gap-2">
-                ⚡ <span>XC TWEETS & GRAMS</span>
+        <!-- Updated Header Section -->
+        <header class="mb-6 text-center max-w-2xl mx-auto">
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-amber-400 flex items-center justify-center gap-2 uppercase">
+                ⚡ <span>Cross Country Social Media Post Generator</span>
             </h1>
-            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">High-density cross country data formatted instantly for graphics & text. · v2.2</p>
+            <p class="text-xs sm:text-sm text-gray-400 mt-1 font-medium tracking-wide">
+                Paste Flat HTML results and generate content instantly
+            </p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
             
+            <!-- Left Input Control Center (Spans 5 columns out of 12) -->
             <div class="lg:col-span-5 space-y-4">
                 
                 <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
@@ -31,20 +39,40 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 mb-1">Target School / Team</label>
-                                <select id="schoolSelector" onchange="renderSocialPost()" 
+                                <select id="schoolSelector" onchange="handleSchoolChange()" 
                                         class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white font-bold">
                                     <option value="">-- Paste Results First --</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-400 mb-1">Hashtag / Subtitle</label>
-                                <input type="text" id="hashtagInput" value="" placeholder="e.g. #GoPanthers"  oninput="renderSocialPost();"
-                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white">
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Display Name Override</label>
+                                <input type="text" id="displayNameOverride" value="" placeholder="e.g. Perry" oninput="renderSocialPost();"
+                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white font-bold placeholder-gray-600">
                             </div>
                         </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Hashtag / Subtitle</label>
+                                <input type="text" id="hashtagInput" value="" placeholder="e.g. #GoPanthers" oninput="renderSocialPost();"
+                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Graphic Font Style</label>
+                                <select id="graphicFontSelector" onchange="renderSocialPost()" 
+                                        class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white font-medium">
+                                    <option value="'Roboto', sans-serif">Roboto (Modern & Clean)</option>
+                                    <option value="'Oswald', sans-serif">Oswald (Athletic Bold)</option>
+                                    <option value="'Impact', sans-serif">Impact (Heavy Compressed)</option>
+                                    <option value="'Zilla Slab', serif">Zilla Slab (Classic Editorial)</option>
+                                    <option value="monospace">Console (Tech/Digital)</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-xs font-semibold text-gray-400 mb-1">Meet Name <span class="text-[10px] text-gray-500 font-normal">(scales dynamically)</span></label>
-                            <input type="text" id="meetNameInput" oninput="renderSocialPost();" placeholder="e.g. Stark County Championships"
+                            <input type="text" id="meetNameInput" oninput="renderSocialPost();" placeholder="e.g. Federal League Championship"
                                    class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white placeholder-gray-600">
                         </div>
                         <div>
@@ -52,13 +80,14 @@
                             <input type="text" id="linkInput" oninput="renderSocialPost();" placeholder="e.g. live.athletic.net/meets/..." 
                                    class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-amber-400 text-white placeholder-gray-600">
                         </div>
+                        
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 mb-1">Accent Color</label>
                                 <div class="flex items-center gap-2">
-                                    <input type="color" id="accentColorPicker" value="#fbbf24" oninput="syncColorFromPicker('accent');"
+                                    <input type="color" id="accentColorPicker" value="#ffdd00" oninput="syncColorFromPicker('accent');"
                                            class="w-10 h-9 rounded cursor-pointer bg-gray-900 border border-gray-600 p-0.5">
-                                    <input type="text" id="accentColorHex" value="#fbbf24" maxlength="7" placeholder="#fbbf24"
+                                    <input type="text" id="accentColorHex" value="#ffdd00" maxlength="7" placeholder="#ffdd00"
                                            oninput="syncColorFromHex('accent');"
                                            class="flex-1 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs font-mono text-amber-400 focus:outline-none focus:border-amber-400 w-20">
                                 </div>
@@ -66,9 +95,9 @@
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 mb-1">Background Color</label>
                                 <div class="flex items-center gap-2">
-                                    <input type="color" id="bgColorPicker" value="#0a0f1d" oninput="syncColorFromPicker('bg');"
+                                    <input type="color" id="bgColorPicker" value="#000000" oninput="syncColorFromPicker('bg');"
                                            class="w-10 h-9 rounded cursor-pointer bg-gray-900 border border-gray-600 p-0.5">
-                                    <input type="text" id="bgColorHex" value="#0a0f1d" maxlength="7" placeholder="#0a0f1d"
+                                    <input type="text" id="bgColorHex" value="#000000" maxlength="7" placeholder="#000000"
                                            oninput="syncColorFromHex('bg');"
                                            class="flex-1 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs font-mono text-gray-300 focus:outline-none focus:border-amber-400 w-20">
                                 </div>
@@ -102,10 +131,11 @@
                                     <div id="customColorWrapper" class="hidden">
                                         <label class="block text-[10px] uppercase font-semibold text-gray-400 mb-0.5">2nd Checker Color</label>
                                         <div class="flex items-center gap-1.5">
-                                            <input type="color" id="checkerColor2Picker" value="#ffffff" oninput="if (document.getElementById('schoolSelector').value) renderSocialPost();"
-                                                   class="w-7 h-7 rounded cursor-pointer bg-gray-800 border border-gray-600 p-0.5">
-                                            <input type="text" id="checkerColor2Hex" value="#ffffff" maxlength="7" readonly
-                                                   class="w-full bg-gray-800 border border-gray-600 rounded px-1 py-0.5 text-[10px] font-mono text-gray-400 focus:outline-none">
+                                            <input type="color" id="checkerColor2Picker" value="#ffffff" oninput="syncColorFromPicker('checker2');"
+                                                   class="w-7 h-7 rounded cursor-pointer bg-gray-900 border border-gray-600 p-0.5">
+                                            <input type="text" id="checkerColor2Hex" value="#ffffff" maxlength="7" placeholder="#ffffff"
+                                                   oninput="syncColorFromHex('checker2');"
+                                                   class="w-full bg-gray-900 border border-gray-600 rounded px-1 py-0.5 text-xs font-mono text-gray-300 focus:outline-none focus:border-amber-400">
                                         </div>
                                     </div>
                                 </div>
@@ -141,22 +171,35 @@
                             </div>
                         </div>
                         
-                        <div class="pt-1 border-t border-gray-700/60 mt-2">
-                            <label class="block text-xs font-semibold text-gray-400 mb-1">Background Image (Full Canvas Cover)</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                                <label class="flex flex-col items-center justify-center w-full h-14 bg-gray-900 border border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-amber-400 transition-colors relative overflow-hidden">
-                                    <span id="bgImgLabel" class="text-[10px] text-gray-500 text-center px-1">Upload Photo</span>
-                                    <img id="bgImgPreview" class="hidden absolute inset-0 w-full h-full object-cover opacity-40">
-                                    <input type="file" accept="image/*" class="hidden" onchange="handleBgImageUpload(this)">
-                                </label>
-                                <div class="space-y-1">
-                                    <div class="flex justify-between text-[10px] text-gray-400 font-mono">
-                                        <span>Opacity:</span>
-                                        <span id="opacityValLabel">20%</span>
+                        <div class="pt-1 border-t border-gray-700/60 mt-2 space-y-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Background Image (Full Canvas Cover)</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                    <label class="flex flex-col items-center justify-center w-full h-14 bg-gray-900 border border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-amber-400 transition-colors relative overflow-hidden">
+                                        <span id="bgImgLabel" class="text-[10px] text-gray-500 text-center px-1">Upload Photo</span>
+                                        <img id="bgImgPreview" class="hidden absolute inset-0 w-full h-full object-cover opacity-40">
+                                        <input type="file" accept="image/*" class="hidden" onchange="handleBgImageUpload(this)">
+                                    </label>
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-[10px] text-gray-400 font-mono">
+                                            <span>Image Opacity:</span>
+                                            <span id="opacityValLabel">20%</span>
+                                        </div>
+                                        <input type="range" id="bgOpacitySlider" min="0" max="100" value="20" oninput="updateBgOpacityValue(this.value)"
+                                               class="w-full accent-amber-500 bg-gray-900 h-1.5 rounded cursor-pointer">
                                     </div>
-                                    <input type="range" id="bgOpacitySlider" min="0" max="100" value="20" oninput="updateBgOpacityValue(this.value)"
-                                           class="w-full accent-amber-500 bg-gray-900 h-1.5 rounded cursor-pointer">
                                 </div>
+                            </div>
+
+                            <!-- Interactive Background Rows Slider Control Suite -->
+                            <div class="pt-1 border-t border-gray-700/40">
+                                <div class="flex justify-between text-xs font-semibold text-gray-400 mb-1">
+                                    <label>Roster Background Row Visibility</label>
+                                    <span id="rowOpacityLabel" class="font-mono text-[10px] text-amber-400 font-bold">15%</span>
+                                </div>
+                                <input type="range" id="rowOpacitySlider" min="0" max="80" value="15" step="5"
+                                       oninput="document.getElementById('rowOpacityLabel').innerText = this.value + '%'; if (document.getElementById('schoolSelector').value) renderSocialPost();"
+                                       class="w-full accent-amber-500 bg-gray-900 h-1.5 rounded cursor-pointer">
                             </div>
                         </div>
 
@@ -166,7 +209,7 @@
                 <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
                     <div class="flex justify-between items-center mb-2">
                         <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400">2. Paste Raw XC Meet Data</h2>
-                        <span class="text-[10px] text-gray-400 bg-gray-900 px-2 py-0.5 rounded font-semibold border border-gray-700">Cleans Last, First Names</span>
+                        <span class="text-[10px] text-gray-400 bg-gray-900 px-2 py-0.5 rounded font-semibold border border-gray-700">Accepts MM:SS formats</span>
                     </div>
                     <textarea id="rawResults" rows="6" 
                               placeholder="Paste individual results and team scores block down here..." 
@@ -181,6 +224,7 @@
 
             </div>
 
+            <!-- Right Interactive Output Sections (Spans 7 columns out of 12) -->
             <div id="dashboardSection" class="hidden lg:col-span-7 space-y-4">
                 
                 <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg space-y-3">
@@ -210,7 +254,7 @@
                                 <span class="text-xs font-bold uppercase tracking-wider text-amber-400">📱 Streamlined Tweet Text</span>
                                 <span id="charCounter" class="text-xs font-mono px-2 py-0.5 bg-gray-900 rounded text-gray-400">0/280</span>
                             </div>
-                            <textarea id="outputPostText" rows="6" 
+                            <textarea id="outputPostText" rows="6" oninput="updateCharCounterOnly();"
                                       class="w-full bg-gray-900 text-gray-100 p-3 rounded-lg text-xs font-mono border border-gray-700 focus:outline-none resize-none leading-relaxed sm:text-sm h-56"></textarea>
                         </div>
                         <button onclick="copyPostToClipboard('outputPostText', this)" 
@@ -332,9 +376,12 @@
             if (type === 'accent') {
                 const val = document.getElementById('accentColorPicker').value;
                 document.getElementById('accentColorHex').value = val;
-            } else {
+            } else if (type === 'bg') {
                 const val = document.getElementById('bgColorPicker').value;
                 document.getElementById('bgColorHex').value = val;
+            } else if (type === 'checker2') {
+                const val = document.getElementById('checkerColor2Picker').value;
+                document.getElementById('checkerColor2Hex').value = val;
             }
             if (document.getElementById('schoolSelector').value) renderSocialPost();
         }
@@ -343,9 +390,12 @@
             if (type === 'accent') {
                 const val = document.getElementById('accentColorHex').value;
                 if(val.length === 7 && val.startsWith('#')) document.getElementById('accentColorPicker').value = val;
-            } else {
+            } else if (type === 'bg') {
                 const val = document.getElementById('bgColorHex').value;
                 if(val.length === 7 && val.startsWith('#')) document.getElementById('bgColorPicker').value = val;
+            } else if (type === 'checker2') {
+                const val = document.getElementById('checkerColor2Hex').value;
+                if(val.length === 7 && val.startsWith('#')) document.getElementById('checkerColor2Picker').value = val;
             }
             if (document.getElementById('schoolSelector').value) renderSocialPost();
         }
@@ -353,8 +403,13 @@
         function cleanNameFormat(nameStr) {
             if (nameStr.includes(',')) {
                 const parts = nameStr.split(',');
-                if (parts.length === 2) {
-                    return `${parts[1].trim()} ${parts[0].trim()}`;
+                if (parts.length >= 2) {
+                    let first = parts[1].trim();
+                    let last = parts[0].trim();
+                    if (parts.length > 2) {
+                        first += " " + parts.slice(2).join(", ").trim();
+                    }
+                    return `${first} ${last}`;
                 }
             }
             return nameStr;
@@ -366,6 +421,15 @@
             if (j === 2 && k !== 12) return number + "nd";
             if (j === 3 && k !== 13) return number + "rd";
             return number + "th";
+        }
+
+        function getContrastYIQ(hexcolor){
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? 'light' : 'dark';
         }
 
         function timeStringToSeconds(timeStr) {
@@ -381,8 +445,9 @@
         function secondsToTimeString(totalSeconds) {
             if (isNaN(totalSeconds) || totalSeconds <= 0) return "N/A";
             const mins = Math.floor(totalSeconds / 60);
-            const secs = (totalSeconds % 60).toFixed(2);
-            const paddedSecs = secs.padStart(5, '0');
+            let secs = (totalSeconds % 60).toFixed(1);
+            if (parseFloat(secs) >= 60) secs = "59.9"; 
+            const paddedSecs = secs.padStart(4, '0');
             return `${mins}:${paddedSecs}`;
         }
 
@@ -395,7 +460,7 @@
 
             parsedXCStore = {};
 
-            const runnerRegex = /^\s*(\d+)\s+(.+?)\s+(\d+)\s+(.+?)\s+(\d+:\d+\.\d+)\s*(\d+)?\s*$/gm;
+            const runnerRegex = /^\s*(\d+)\s+([A-Za-z\s\.,\-\x7f-\xff]+?)\s+(\d+)\s+([A-Za-z0-9\.\s\-]+?)\s+(\d{1,2}:\d{2}(?:\.\d+)?)\s*(\d+)?\s*$/gm;
             let match;
 
             while ((match = runnerRegex.exec(rawText)) !== null) {
@@ -421,7 +486,7 @@
                 parsedXCStore[schoolName].runners.push(runner);
             }
 
-            const teamBlockRegex = /^\s*(\d+)\s+(.+?)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+/gm;
+            const teamBlockRegex = /^\s*(\d+)\s+([A-Za-z0-9\.\s\-]+?)\s+(\d+)\s+\d+\s+\d+\s+\d+/gm;
             let teamMatch;
 
             while ((teamMatch = teamBlockRegex.exec(rawText)) !== null) {
@@ -443,20 +508,51 @@
 
             const availableSchools = Object.keys(parsedXCStore).sort();
             if (availableSchools.length === 0) {
-                alert("Could not detect any school results structure. Check the column alignments!");
+                alert("Could not detect any school results structure. Please double check standard result text spacing column format!");
                 return;
             }
 
             availableSchools.forEach(sch => {
+                if(parsedXCStore[sch].runners.length === 0 && !parsedXCStore[sch].rank) return;
+                
                 const opt = document.createElement('option');
                 opt.value = sch;
-                const meta = parsedXCStore[sch].rank ? `(Rank #${parsedXCStore[sch].rank})` : `(No Score)`;
+                const meta = parsedXCStore[sch].rank ? `(Rank #${parsedXCStore[sch].rank})` : `(${parsedXCStore[sch].runners.length} Finisher(s))`;
                 opt.innerText = `${sch} ${meta}`;
                 schoolSelector.appendChild(opt);
             });
 
+            const meetLines = rawText.split('\n');
+            if(meetLines[0] && meetLines[0].trim().length > 4 && !meetLines[0].includes('===')) {
+                document.getElementById('meetNameInput').value = meetLines[0].trim();
+            }
+
             document.getElementById('dashboardSection').classList.remove('hidden');
+            handleSchoolChange();
+        }
+
+        function handleSchoolChange() {
+            const targetSchool = document.getElementById('schoolSelector').value;
+            if (!targetSchool) return;
+            
+            let defaultCleanName = targetSchool
+                .replace(/^Mass\.\s+/i, '')
+                .replace(/^Uniont\.\s+/i, '')
+                .trim();
+                
+            document.getElementById('displayNameOverride').value = defaultCleanName;
             renderSocialPost();
+        }
+
+        function updateCharCounterOnly() {
+            const textStr = document.getElementById('outputPostText').value;
+            const counter = document.getElementById('charCounter');
+            counter.innerText = `${textStr.length}/280`;
+            if (textStr.length > 280) {
+                counter.className = "text-xs font-mono px-2 py-0.5 bg-red-950 rounded text-red-400 font-bold";
+            } else {
+                counter.className = "text-xs font-mono px-2 py-0.5 bg-gray-900 rounded text-gray-400";
+            }
         }
 
         function renderSocialPost() {
@@ -464,6 +560,10 @@
             if (!targetSchool || !parsedXCStore[targetSchool]) return;
 
             const teamData = parsedXCStore[targetSchool];
+            
+            const customDisplayName = document.getElementById('displayNameOverride').value.trim();
+            const schoolDisplayName = customDisplayName || teamData.name;
+
             const meetName = document.getElementById('meetNameInput').value.trim() || "XC Invitational";
             const hashtag = document.getElementById('hashtagInput').value.trim();
             const resultsUrl = document.getElementById('linkInput').value.trim();
@@ -482,7 +582,7 @@
             }
 
             let textPost = `🚨 ${meetName.toUpperCase()} 🚨\n`;
-            textPost += `🏃‍♂️ ${targetSchool.toUpperCase()} - ${genderTag}\n\n`;
+            textPost += `🏃‍♂️ ${schoolDisplayName.toUpperCase()} - ${genderTag}\n\n`;
             if (teamData.rank) {
                 textPost += `🏆 Team Finish: ${getOrdinalSuffix(teamData.rank)}\n`;
                 textPost += `📊 Total Score: ${teamData.score} pts\n\n`;
@@ -498,16 +598,30 @@
             if (hashtag) textPost += (resultsUrl ? '' : '\n') + hashtag;
 
             document.getElementById('outputPostText').value = textPost;
-            
-            const counter = document.getElementById('charCounter');
-            counter.innerText = `${textPost.length}/280`;
-            if (textPost.length > 280) {
-                counter.className = "text-xs font-mono px-2 py-0.5 bg-red-950 rounded text-red-400 font-bold";
-            } else {
-                counter.className = "text-xs font-mono px-2 py-0.5 bg-gray-900 rounded text-gray-400";
-            }
+            updateCharCounterOnly();
 
-            drawInstagramGraphicCanvas(meetName, targetSchool, genderTag, teamData, displayRoster, calculatedAverageStr);
+            drawInstagramGraphicCanvas(meetName, schoolDisplayName, genderTag, teamData, displayRoster, calculatedAverageStr);
+        }
+
+        function drawHighContrastText(ctx, text, x, y, font, fillColor, isLightBg) {
+            ctx.font = font;
+            if (isLightBg) {
+                ctx.save();
+                ctx.strokeStyle = '#000000';
+                ctx.lineJoin = 'round';
+                ctx.miterLimit = 2;
+                
+                let isLargeHeader = font.includes('68px');
+                ctx.lineWidth = isLargeHeader ? 3.5 : 2.0; 
+                
+                ctx.strokeText(text, x, y);
+                ctx.fillStyle = fillColor;
+                ctx.fillText(text, x, y);
+                ctx.restore();
+            } else {
+                ctx.fillStyle = fillColor;
+                ctx.fillText(text, x, y);
+            }
         }
 
         function drawInstagramGraphicCanvas(meetName, school, genderTag, teamData, roster, calculatedAverageStr) {
@@ -519,11 +633,26 @@
             const useCheckerboard = document.getElementById('checkerboardToggle').checked;
             const checkerSize = parseInt(document.getElementById('checkerSizeSlider').value);
             const pairMode = document.getElementById('checkerPairMode').value;
+            const fontStyle = document.getElementById('graphicFontSelector').value;
+            
+            const rowAlphaVal = parseFloat(document.getElementById('rowOpacitySlider').value) / 100;
+            const themeMode = getContrastYIQ(bgColor); 
+            const isLightBg = (themeMode === 'light');
+            
+            const fallbackTextColor = isLightBg ? '#000000' : '#ffffff';
+            const subheaderTextColor = isLightBg ? '#4b5563' : '#94a3b8';
+            const tableDividerColor = isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.25)';
+            const rowBoxBgColor = isLightBg ? `rgba(15, 23, 42, ${rowAlphaVal})` : `rgba(255, 255, 255, ${rowAlphaVal})`;
+            const tableRowDataColor = fallbackTextColor;
 
             let secondaryCheckerColor = "#ffffff";
             if (pairMode === 'bg') secondaryCheckerColor = bgColor;
             if (pairMode === 'custom') secondaryCheckerColor = document.getElementById('checkerColor2Picker').value;
-            document.getElementById('checkerColor2Hex').value = secondaryCheckerColor;
+            
+            if (pairMode !== 'custom') {
+                document.getElementById('checkerColor2Hex').value = secondaryCheckerColor;
+                document.getElementById('checkerColor2Picker').value = secondaryCheckerColor;
+            }
 
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, 1080, 1080);
@@ -544,32 +673,21 @@
                     drawH = bgCanvasImg.height * (1080 / bgCanvasImg.width);
                     drawY = (1080 - drawH) / 2;
                 }
-                
                 ctx.drawImage(bgCanvasImg, drawX, drawY, drawW, drawH);
                 ctx.restore();
             }
 
-            // --- CANVAS LAYOUT PROFILE BOUNDARIES ---
             const frameX = 35;
             const frameY = 35;
             const frameW = 1010;
             const frameH = 1010;
-            const defaultLineThickness = 4;
 
-            // Safe Offset Variables computed dynamically based on checker scale configuration
             let dynamicTopOffset = 0;
             let dynamicBottomOffset = 0;
 
             if (useCheckerboard) {
                 dynamicTopOffset = checkerSize * 2;
                 dynamicBottomOffset = checkerSize * 2;
-
-                // Left and right vertical sides are built seamlessly down the margin tracks
-                ctx.fillStyle = accentColor;
-                ctx.fillRect(frameX, frameY, defaultLineThickness, frameH); 
-                ctx.fillRect(frameX + frameW - defaultLineThickness, frameY, defaultLineThickness, frameH); 
-
-                // Render Top Checkerboard Block tape
                 for (let row = 0; row < 2; row++) {
                     for (let xPos = frameX; xPos < (frameX + frameW); xPos += checkerSize) {
                         let cellIndex = Math.floor((xPos - frameX) / checkerSize);
@@ -577,8 +695,6 @@
                         ctx.fillRect(xPos, frameY + (row * checkerSize), Math.min(checkerSize, (frameX + frameW) - xPos), checkerSize);
                     }
                 }
-
-                // Render Bottom Checkerboard Block tape
                 for (let row = 0; row < 2; row++) {
                     for (let xPos = frameX; xPos < (frameX + frameW); xPos += checkerSize) {
                         let cellIndex = Math.floor((xPos - frameX) / checkerSize);
@@ -587,83 +703,93 @@
                     }
                 }
             } else {
-                // Standard Clean Minimal Frame Style
                 ctx.strokeStyle = accentColor;
-                ctx.lineWidth = defaultLineThickness;
+                ctx.lineWidth = 4;
                 ctx.strokeRect(frameX, frameY, frameW, frameH);
             }
 
-            // --- TEXT LAYOUT ARRANGEMENT (ZERO-OVERLAP BUFFER CALCULATIONS) ---
             let textBaselineY = frameY + dynamicTopOffset + 35;
-
-            // Dynamic Font Sizing for Meet Name
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = fallbackTextColor;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             
-            let optimalMeetNameSize = 34; // Base preferred font weight
+            let optimalMeetNameSize = 34; 
             if (meetName.length > 24) optimalMeetNameSize = 28;
             if (meetName.length > 32) optimalMeetNameSize = 22;
             
-            ctx.font = `900 ${optimalMeetNameSize}px sans-serif`;
+            ctx.font = `900 ${optimalMeetNameSize}px ${fontStyle}`;
             ctx.fillText(meetName.toUpperCase(), 1080 / 2, textBaselineY);
 
-            // School Name Header
-            ctx.fillStyle = accentColor;
-            ctx.font = '950 64px sans-serif';
-            ctx.fillText(school.toUpperCase(), 1080 / 2, textBaselineY + optimalMeetNameSize + 15);
+            let isImpact = fontStyle.includes('Impact');
+            let teamWeight = isImpact ? 'normal' : '900';
+            let tableFontFamily = isImpact ? "'Oswald', sans-serif" : fontStyle;
 
-            // Gender Subtitle Section
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = 'bold 28px sans-serif';
+            drawHighContrastText(
+                ctx, 
+                school.toUpperCase(), 
+                1080 / 2, 
+                textBaselineY + optimalMeetNameSize + 15, 
+                `${teamWeight} 68px ${fontStyle}`, 
+                accentColor, 
+                isLightBg
+            );
+
+            ctx.fillStyle = subheaderTextColor;
+            ctx.font = `bold 28px ${isImpact ? "'Oswald', sans-serif" : fontStyle}`;
             ctx.fillText(genderTag.toUpperCase(), 1080 / 2, textBaselineY + optimalMeetNameSize + 90);
 
-            // Draw Logos safely placed relative to the calculated checker text lines
             drawLogosOnCanvas(ctx, textBaselineY + 5);
 
-            // Summary Info Strip Row Container
             let bannerY = textBaselineY + optimalMeetNameSize + 150;
-            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            ctx.fillStyle = isLightBg ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)';
             ctx.fillRect(80, bannerY, 920, 80);
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.strokeStyle = isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
             ctx.lineWidth = 1;
             ctx.strokeRect(80, bannerY, 920, 80);
 
             if (teamData.rank) {
                 ctx.textAlign = 'left';
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '800 24px sans-serif';
+                ctx.fillStyle = fallbackTextColor;
+                ctx.font = `800 24px ${tableFontFamily}`;
                 ctx.fillText(`TEAM RANK: ${getOrdinalSuffix(teamData.rank).toUpperCase()}`, 110, bannerY + 26);
 
                 ctx.textAlign = 'center';
-                ctx.fillStyle = accentColor;
-                ctx.fillText(`SCORE: ${teamData.score} PTS`, 1080 / 2, bannerY + 26);
+                drawHighContrastText(
+                    ctx, 
+                    `SCORE: ${teamData.score} PTS`, 
+                    1080 / 2, 
+                    bannerY + 26, 
+                    `800 24px ${tableFontFamily}`, 
+                    accentColor, 
+                    isLightBg
+                );
 
                 ctx.textAlign = 'right';
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = fallbackTextColor;
+                ctx.font = `800 24px ${tableFontFamily}`;
                 ctx.fillText(`TOP 5 AVG: ${calculatedAverageStr}`, 970, bannerY + 26);
             } else {
                 ctx.textAlign = 'center';
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = 'italic bold 24px sans-serif';
+                ctx.fillStyle = subheaderTextColor;
+                ctx.font = `italic bold 24px ${tableFontFamily}`;
                 ctx.fillText("INDIVIDUAL ROSTER BREAKDOWN SUMMARY", 1080 / 2, bannerY + 26);
             }
 
-            // Performance Roster Table Setup Calculations
             let tableStartY = bannerY + 120;
             let placeColCenterX = 180;  
             let athleteColCenterX = 540; 
             let timeColCenterX = 900;   
 
-            ctx.fillStyle = '#ffffff'; 
-            ctx.font = '900 22px sans-serif'; 
+            ctx.fillStyle = fallbackTextColor; 
+            ctx.font = `900 22px ${tableFontFamily}`; 
             ctx.textAlign = 'center'; 
+            ctx.textBaseline = 'top';
             
             ctx.fillText("PLACE", placeColCenterX, tableStartY);
             ctx.fillText("ATHLETE", athleteColCenterX, tableStartY);
             ctx.fillText("TIME", timeColCenterX, tableStartY);
 
-            ctx.strokeStyle = 'rgba(255,255,255,0.25)'; 
+            ctx.strokeStyle = tableDividerColor; 
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(80, tableStartY + 35);
@@ -677,39 +803,43 @@
             roster.forEach((runner, index) => {
                 let currentY = startRowY + (index * rowHeight);
 
-                // Row High-Visibility Blocks
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; 
-                ctx.fillRect(80, currentY - (rowBoxH / 2) - 8, 920, rowBoxH);
+                ctx.fillStyle = rowBoxBgColor; 
+                ctx.fillRect(80, currentY - (rowBoxH / 2), 920, rowBoxH);
                 
-                // Color Alternator Accents
-                ctx.fillStyle = (index % 2 === 0) ? accentColor : '#ffffff';
-                ctx.fillRect(80, currentY - (rowBoxH / 2) - 8, 12, rowBoxH);
+                ctx.fillStyle = accentColor;
+                ctx.fillRect(80, currentY - (rowBoxH / 2), 12, rowBoxH);
 
+                ctx.textBaseline = 'middle';
                 ctx.textAlign = 'center';
 
-                // Runner Place Numbers (Parentheses logic implemented)
-                ctx.font = '900 30px font-mono, monospace, sans-serif';
-                ctx.fillStyle = accentColor; 
+                ctx.font = `900 28px ${tableFontFamily}`;
+                ctx.fillStyle = tableRowDataColor; 
                 let rawPlaceStr = getOrdinalSuffix(runner.place);
                 let finalPlaceDisplay = index >= 5 ? `(${rawPlaceStr})` : rawPlaceStr;
-                ctx.fillText(finalPlaceDisplay, placeColCenterX, currentY - 14);
+                ctx.fillText(finalPlaceDisplay, placeColCenterX, currentY);
 
-                // Athlete Name Data Cell
-                ctx.font = '800 30px sans-serif';
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(runner.name, athleteColCenterX, currentY - 14);
+                let nameWeight = tableFontFamily.includes('Zilla') ? 'bold' : '700';
+                drawHighContrastText(
+                    ctx, 
+                    runner.name, 
+                    athleteColCenterX, 
+                    currentY, 
+                    `${nameWeight} 28px ${tableFontFamily}`, 
+                    accentColor, 
+                    isLightBg
+                );
 
-                // Timing Field Data Cell
-                ctx.font = '900 30px font-mono, monospace, sans-serif';
-                ctx.fillStyle = accentColor;
-                ctx.fillText(runner.time, timeColCenterX, currentY - 14);
+                ctx.textAlign = 'center';
+                ctx.font = `900 28px ${tableFontFamily}`;
+                ctx.fillStyle = tableRowDataColor;
+                ctx.fillText(runner.time, timeColCenterX, currentY);
             });
 
-            // Footer Subtitle Tag Calculation safely tracking bottom checker depth offsets
+            ctx.textBaseline = 'top';
             let footerTag = document.getElementById('hashtagInput').value.trim() || "";
             let footerYPosition = (frameY + frameH) - dynamicBottomOffset - 25;
-            ctx.fillStyle = 'rgba(255,255,255,0.2)';
-            ctx.font = 'bold 20px sans-serif';
+            ctx.fillStyle = isLightBg ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.2)';
+            ctx.font = `bold 20px ${tableFontFamily}`;
             ctx.textAlign = 'center';
             ctx.fillText(footerTag, 1080 / 2, footerYPosition);
 
@@ -719,7 +849,8 @@
 
         function downloadInstagramGraphic() {
             const canvas = document.getElementById('instagramCanvas');
-            const school = document.getElementById('schoolSelector').value || "Team";
+            const customDisplayName = document.getElementById('displayNameOverride').value.trim();
+            const school = customDisplayName || document.getElementById('schoolSelector').value || "Team";
             const tag = document.getElementById('genderTagInput').value.trim() || "Results";
             
             const link = document.createElement('a');
