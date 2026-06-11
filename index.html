@@ -1,0 +1,557 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross Country Tweets & Grams Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { -webkit-tap-highlight-color: transparent; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans antialiased p-3 sm:p-6 lg:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <header class="mb-5 text-center max-w-xl mx-auto">
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-amber-400 flex items-center justify-center gap-2">
+                ⚡ <span>XC TWEETS & GRAMS</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">High-density cross country data formatted instantly for graphics & text. · v1.2</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+            
+            <!-- Left Side Control Panel -->
+            <div class="lg:col-span-5 space-y-4">
+                
+                <!-- Step 1: Configuration -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3">1. Setup Filters & Team</h2>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Target School / Team</label>
+                                <select id="schoolSelector" onchange="renderSocialPost()" 
+                                        class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white font-bold">
+                                    <option value="">-- Paste Results First --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Hashtag / Subtitle</label>
+                                <input type="text" id="hashtagInput" value="" placeholder="e.g. #GoPanthers"  oninput="renderSocialPost();"
+                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Meet Name <span class="text-[10px] text-gray-500 font-normal">(shown on graphics)</span></label>
+                            <input type="text" id="meetNameInput" oninput="renderSocialPost();" placeholder="e.g. Stark County Championships"
+                                   class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white placeholder-gray-600">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Accent Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="accentColorPicker" value="#fbbf24" oninput="syncColorFromPicker('accent');"
+                                           class="w-10 h-9 rounded cursor-pointer bg-gray-900 border border-gray-600 p-0.5">
+                                    <input type="text" id="accentColorHex" value="#fbbf24" maxlength="7" placeholder="#fbbf24"
+                                           oninput="syncColorFromHex('accent');"
+                                           class="flex-1 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs font-mono text-amber-400 focus:outline-none focus:border-amber-400 w-20">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Background Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="bgColorPicker" value="#0a0f1d" oninput="syncColorFromPicker('bg');"
+                                           class="w-10 h-9 rounded cursor-pointer bg-gray-900 border border-gray-600 p-0.5">
+                                    <input type="text" id="bgColorHex" value="#0a0f1d" maxlength="7" placeholder="#0a0f1d"
+                                           oninput="syncColorFromHex('bg');"
+                                           class="flex-1 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs font-mono text-gray-300 focus:outline-none focus:border-amber-400 w-20">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Logo — Top Left</label>
+                                <label class="flex flex-col items-center justify-center w-full h-16 bg-gray-900 border border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-amber-400 transition-colors relative overflow-hidden">
+                                    <span id="logoLeftLabel" class="text-[10px] text-gray-500 text-center px-1">Click to upload</span>
+                                    <img id="logoLeftPreview" class="hidden absolute inset-0 w-full h-full object-contain p-1">
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleLogoUpload(this, 'left')">
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">Logo — Top Right</label>
+                                <label class="flex flex-col items-center justify-center w-full h-16 bg-gray-900 border border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-amber-400 transition-colors relative overflow-hidden">
+                                    <span id="logoRightLabel" class="text-[10px] text-gray-500 text-center px-1">Click to upload</span>
+                                    <img id="logoRightPreview" class="hidden absolute inset-0 w-full h-full object-contain p-1">
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleLogoUpload(this, 'right')">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Paste Clipboard Text -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400">2. Paste Raw XC Meet Data</h2>
+                        <span class="text-[10px] text-gray-400 bg-gray-900 px-2 py-0.5 rounded font-semibold border border-gray-700">Cleans Last, First Names</span>
+                    </div>
+                    <textarea id="rawResults" rows="6" 
+                              placeholder="Paste individual results and team scores block down here..." 
+                              onfocus="this.select()"
+                              class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-xs font-mono focus:outline-none focus:border-amber-400 text-white placeholder-gray-600 transition-all lg:h-44"></textarea>
+                    
+                    <button onclick="processXCResultsData()" 
+                            class="w-full mt-3 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold py-3 px-4 rounded-lg text-sm transition-colors uppercase tracking-wider shadow-md">
+                        Parse Results & Clean Names 📊
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Right Side Dashboard -->
+            <div id="dashboardSection" class="hidden lg:col-span-7 space-y-4">
+                
+                <!-- Step 3: Interactive Settings -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400">3. Graphic Roster Size Settings</h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Roster Depth to Display</label>
+                            <div class="grid grid-cols-2 gap-2 bg-gray-900 p-1 rounded-lg border border-gray-700">
+                                <button id="depthTop5" onclick="setRosterDepth(5)" class="py-1.5 text-xs font-bold rounded-md bg-amber-500 text-gray-950 transition-all">Top 5 Scorers</button>
+                                <button id="depthTop7" onclick="setRosterDepth(7)" class="py-1.5 text-xs font-bold rounded-md text-gray-400 hover:text-white transition-all">Top 7 (Full Team)</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Division / Gender Tag</label>
+                            <input type="text" id="genderTagInput" value="Boys Varsity" oninput="renderSocialPost()" placeholder="e.g. Boys' Varsity or Girls' Open"
+                                   class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-400 text-white mt-0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Combined Display Workspace -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">📱 Streamlined Tweet Text</span>
+                                <span id="charCounter" class="text-xs font-mono px-2 py-0.5 bg-gray-900 rounded text-gray-400">0/280</span>
+                            </div>
+                            <textarea id="outputPostText" rows="6" 
+                                      class="w-full bg-gray-900 text-gray-100 p-3 rounded-lg text-xs font-mono border border-gray-700 focus:outline-none resize-none leading-relaxed sm:text-sm h-56"></textarea>
+                        </div>
+                        <button onclick="copyPostToClipboard('outputPostText', this)" 
+                                class="w-full mt-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-wider shadow-md">
+                            📋 Copy Tweet Text
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-pink-400 block mb-2">📸 Instagram Post Preview</span>
+                            <canvas id="instagramCanvas" width="1080" height="1080" class="hidden"></canvas>
+                            <div class="w-full aspect-square bg-gray-950 rounded-lg border border-gray-700 overflow-hidden relative shadow-inner max-w-[240px] mx-auto">
+                                <img id="instagramPreviewImage" class="w-full h-full object-contain" alt="Instagram graphic placeholder">
+                            </div>
+                        </div>
+                        <button onclick="downloadInstagramGraphic()" 
+                                class="w-full mt-3 bg-gradient-to-r from-pink-600 to-amber-500 hover:opacity-90 text-white font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-wider shadow-md">
+                            📸 Download Graphic (.PNG)
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Parsing Logic Engine -->
+    <script>
+        let parsedXCStore = {};
+        let rosterDepthLimit = 5; 
+        let logoLeftImg = null;
+        let logoRightImg = null;
+
+        function handleLogoUpload(input, side) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    if (side === 'left') {
+                        logoLeftImg = img;
+                        document.getElementById('logoLeftPreview').src = e.target.result;
+                        document.getElementById('logoLeftPreview').classList.remove('hidden');
+                        document.getElementById('logoLeftLabel').classList.add('hidden');
+                    } else {
+                        logoRightImg = img;
+                        document.getElementById('logoRightPreview').src = e.target.result;
+                        document.getElementById('logoRightPreview').classList.remove('hidden');
+                        document.getElementById('logoRightLabel').classList.add('hidden');
+                    }
+                    if (document.getElementById('schoolSelector').value) renderSocialPost();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function drawLogosOnCanvas(ctx) {
+            const logoSize = 130;
+            const pad = 40;
+            if (logoLeftImg) {
+                const ratio = Math.min(logoSize / logoLeftImg.width, logoSize / logoLeftImg.height);
+                const w = logoLeftImg.width * ratio;
+                const h = logoLeftImg.height * ratio;
+                ctx.drawImage(logoLeftImg, pad, pad, w, h);
+            }
+            if (logoRightImg) {
+                const ratio = Math.min(logoSize / logoRightImg.width, logoSize / logoRightImg.height);
+                const w = logoRightImg.width * ratio;
+                const h = logoRightImg.height * ratio;
+                ctx.drawImage(logoRightImg, 1080 - pad - w, pad, w, h);
+            }
+        }
+
+        function setRosterDepth(depth) {
+            rosterDepthLimit = depth;
+            document.getElementById('depthTop5').className = depth === 5 ? "py-1.5 text-xs font-bold rounded-md bg-amber-500 text-gray-950 transition-all" : "py-1.5 text-xs font-bold rounded-md text-gray-400 hover:text-white transition-all";
+            document.getElementById('depthTop7').className = depth === 7 ? "py-1.5 text-xs font-bold rounded-md bg-amber-500 text-gray-950 transition-all" : "py-1.5 text-xs font-bold rounded-md text-gray-400 hover:text-white transition-all";
+            renderSocialPost();
+        }
+
+        function syncColorFromPicker(type) {
+            if (type === 'accent') {
+                const val = document.getElementById('accentColorPicker').value;
+                document.getElementById('accentColorHex').value = val;
+            } else {
+                const val = document.getElementById('bgColorPicker').value;
+                document.getElementById('bgColorHex').value = val;
+            }
+            if (document.getElementById('schoolSelector').value) renderSocialPost();
+        }
+
+        function syncColorFromHex(type) {
+            if (type === 'accent') {
+                const val = document.getElementById('accentColorHex').value;
+                if(val.length === 7 && val.startsWith('#')) document.getElementById('accentColorPicker').value = val;
+            } else {
+                const val = document.getElementById('bgColorHex').value;
+                if(val.length === 7 && val.startsWith('#')) document.getElementById('bgColorPicker').value = val;
+            }
+            if (document.getElementById('schoolSelector').value) renderSocialPost();
+        }
+
+        // Flips "Last, First" into "First Last" cleanly
+        function cleanNameFormat(nameStr) {
+            if (nameStr.includes(',')) {
+                const parts = nameStr.split(',');
+                if (parts.length === 2) {
+                    return `${parts[1].trim()} ${parts[0].trim()}`;
+                }
+            }
+            return nameStr;
+        }
+
+        // Appends English ordinal rules (e.g. 3rd, 6th, 102nd)
+        function getOrdinalSuffix(number) {
+            const j = number % 10, k = number % 100;
+            if (j === 1 && k !== 11) return number + "st";
+            if (j === 2 && k !== 12) return number + "nd";
+            if (j === 3 && k !== 13) return number + "rd";
+            return number + "th";
+        }
+
+        // Converts MM:SS.hh into pure total seconds
+        function timeStringToSeconds(timeStr) {
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                const mins = parseFloat(parts[0]);
+                const secs = parseFloat(parts[1]);
+                return (mins * 60) + secs;
+            }
+            return parseFloat(parts[0]) || 0;
+        }
+
+        // Converts seconds back into MM:SS.hh
+        function secondsToTimeString(totalSeconds) {
+            if (isNaN(totalSeconds) || totalSeconds <= 0) return "N/A";
+            const mins = Math.floor(totalSeconds / 60);
+            const secs = (totalSeconds % 60).toFixed(2);
+            const paddedSecs = secs.padStart(5, '0');
+            return `${mins}:${paddedSecs}`;
+        }
+
+        // PARSER ENGINE FOR CROSS COUNTRY TEXT
+        function processXCResultsData() {
+            const rawText = document.getElementById('rawResults').value.trim();
+            if (!rawText) {
+                alert("Please paste your raw results data first!");
+                return;
+            }
+
+            parsedXCStore = {};
+
+            const runnerRegex = /^\s*(\d+)\s+([\w\s.,]+?)\s{2,}([\w\s.,&-]+?)\s{2,}(\d+:\d+\.\d+)\s+(\d+)/gm;
+            let match;
+
+            while ((match = runnerRegex.exec(rawText)) !== null) {
+                const schoolName = match[3].trim();
+                const runner = {
+                    place: parseInt(match[1]),
+                    name: cleanNameFormat(match[2].trim()),
+                    time: match[4].trim(),
+                    pts: parseInt(match[5])
+                };
+
+                if (!parsedXCStore[schoolName]) {
+                    parsedXCStore[schoolName] = {
+                        name: schoolName,
+                        runners: [],
+                        rank: null,
+                        score: null
+                    };
+                }
+                parsedXCStore[schoolName].runners.push(runner);
+            }
+
+            // Parse Team Standing Box Block
+            const teamBlockRegex = /^\s*(\d+)\s+([\w\s.,&-]+?)\s{2,}(\d+)([\s\S]*?)(?=^\s*\d+\s+[\w\s.,&-]+?\s{2,}\d+|$)/gm;
+            let teamMatch;
+
+            while ((teamMatch = teamBlockRegex.exec(rawText)) !== null) {
+                const teamName = teamMatch[2].trim();
+                if (parsedXCStore[teamName]) {
+                    parsedXCStore[teamName].rank = parseInt(teamMatch[1]);
+                    parsedXCStore[teamName].score = parseInt(teamMatch[3]);
+                }
+            }
+
+            const schoolSelector = document.getElementById('schoolSelector');
+            schoolSelector.innerHTML = '';
+
+            const availableSchools = Object.keys(parsedXCStore).sort();
+            if (availableSchools.length === 0) {
+                alert("Could not detect any school results structure. Check the column alignments!");
+                return;
+            }
+
+            availableSchools.forEach(sch => {
+                const opt = document.createElement('option');
+                opt.value = sch;
+                const meta = parsedXCStore[sch].rank ? `(Rank #${parsedXCStore[sch].rank})` : `(No Score)`;
+                opt.innerText = `${sch} ${meta}`;
+                schoolSelector.appendChild(opt);
+            });
+
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            renderSocialPost();
+        }
+
+        // GENERATION & LAYOUT COMPILER
+        function renderSocialPost() {
+            const targetSchool = document.getElementById('schoolSelector').value;
+            if (!targetSchool || !parsedXCStore[targetSchool]) return;
+
+            const teamData = parsedXCStore[targetSchool];
+            const meetName = document.getElementById('meetNameInput').value.trim() || "XC Invitational";
+            const hashtag = document.getElementById('hashtagInput').value.trim();
+            const genderTag = document.getElementById('genderTagInput').value.trim() || "Varsity";
+
+            const sortedRoster = [...teamData.runners].sort((a, b) => a.place - b.place);
+            const displayRoster = sortedRoster.slice(0, rosterDepthLimit);
+
+            // MANUALLY CALCULATE TRUE TOP 5 AVERAGE TIME
+            let calculatedAverageStr = "N/A";
+            if (sortedRoster.length >= 5) {
+                let totalSeconds = 0;
+                for (let i = 0; i < 5; i++) {
+                    totalSeconds += timeStringToSeconds(sortedRoster[i].time);
+                }
+                calculatedAverageStr = secondsToTimeString(totalSeconds / 5);
+            }
+
+            // 1. Compile Social Text Box (Score, Place, and the Top 5 Runners Included)
+            let textPost = `🚨 ${meetName.toUpperCase()} 🚨\n`;
+            textPost += `🏃‍♂️ ${targetSchool.toUpperCase()} - ${genderTag}\n\n`;
+            if (teamData.rank) {
+                textPost += `🏆 Team Finish: ${getOrdinalSuffix(teamData.rank)}\n`;
+                textPost += `📊 Total Score: ${teamData.score} pts\n\n`;
+            }
+            
+            textPost += `📋 Top Scorers:\n`;
+            const tweetRosterLimit = Math.min(sortedRoster.length, 5);
+            for (let i = 0; i < tweetRosterLimit; i++) {
+                textPost += `${getOrdinalSuffix(sortedRoster[i].place)} - ${sortedRoster[i].name} (${sortedRoster[i].time})\n`;
+            }
+
+            if (hashtag) textPost += `\n${hashtag}`;
+
+            document.getElementById('outputPostText').value = textPost;
+            
+            // Character Counter update
+            const counter = document.getElementById('charCounter');
+            counter.innerText = `${textPost.length}/280`;
+            if (textPost.length > 280) {
+                counter.className = "text-xs font-mono px-2 py-0.5 bg-red-950 rounded text-red-400 font-bold";
+            } else {
+                counter.className = "text-xs font-mono px-2 py-0.5 bg-gray-900 rounded text-gray-400";
+            }
+
+            // 2. Compile Instagram Graphic Preview
+            drawInstagramGraphicCanvas(meetName, targetSchool, genderTag, teamData, displayRoster, calculatedAverageStr);
+        }
+
+        function drawInstagramGraphicCanvas(meetName, school, genderTag, teamData, roster, calculatedAverageStr) {
+            const canvas = document.getElementById('instagramCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const accentColor = document.getElementById('accentColorPicker').value;
+            const bgColor = document.getElementById('bgColorPicker').value;
+
+            // Base Fill
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, 1080, 1080);
+
+            // Borders
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 4;
+            ctx.strokeRect(25, 25, 1030, 1030);
+
+            // Title Header Cards
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'black 26px sans-serif';
+            ctx.textBaseline = 'top';
+            ctx.textAlign = 'center';
+            ctx.fillText(meetName.toUpperCase(), 1080 / 2, 65);
+
+            ctx.fillStyle = accentColor;
+            ctx.font = '950 64px sans-serif';
+            ctx.fillText(school.toUpperCase(), 1080 / 2, 115);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.fillText(genderTag.toUpperCase(), 1080 / 2, 195);
+
+            drawLogosOnCanvas(ctx);
+
+            // Metadata Box
+            let bannerY = 250;
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            ctx.fillRect(60, bannerY, 960, 100);
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(60, bannerY, 960, 100);
+
+            if (teamData.rank) {
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '800 24px sans-serif';
+                ctx.fillText(`TEAM RANK: ${getOrdinalSuffix(teamData.rank).toUpperCase()}`, 90, bannerY + 36);
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = accentColor;
+                ctx.fillText(`SCORE: ${teamData.score} PTS`, 1080 / 2, bannerY + 36);
+
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`TOP 5 AVG: ${calculatedAverageStr}`, 990, bannerY + 36);
+            } else {
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = 'italic bold 24px sans-serif';
+                ctx.fillText("INDIVIDUAL ROSTER BREAKDOWN SUMMARY", 1080 / 2, bannerY + 36);
+            }
+
+            // Scoreboard Grid Alignments
+            let tableStartY = 400;
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.font = 'bold 20px sans-serif';
+            
+            ctx.textAlign = 'left';
+            ctx.fillText("PLACE", 80, tableStartY);
+            
+            ctx.textAlign = 'center';
+            ctx.fillText("ATHLETE", 1080 / 2, tableStartY); // Flipped descriptor cleanly removed
+            
+            ctx.textAlign = 'right';
+            ctx.fillText("TIME", 1000, tableStartY);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(80, tableStartY + 25);
+            ctx.lineTo(1000, tableStartY + 25);
+            ctx.stroke();
+
+            let startRowY = tableStartY + 60;
+            let rowHeight = rosterDepthLimit === 5 ? 100 : 75;
+
+            roster.forEach((runner, index) => {
+                let currentY = startRowY + (index * rowHeight);
+
+                if (index % 2 === 0) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.015)';
+                    ctx.fillRect(60, currentY - 20, 960, rowHeight - 10);
+                }
+
+                // Place aligned LEFT (now utilizing beautiful ordinal notation rules)
+                ctx.textAlign = 'left';
+                ctx.font = '900 32px font-mono, monospace, sans-serif';
+                ctx.fillStyle = index < 5 ? accentColor : '#ffffff'; 
+                ctx.fillText(getOrdinalSuffix(runner.place), 85, currentY);
+
+                // Name CENTERED
+                ctx.textAlign = 'center';
+                ctx.font = '800 32px sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(runner.name, 1080 / 2, currentY);
+
+                // Time aligned RIGHT
+                ctx.textAlign = 'right';
+                ctx.font = '900 32px font-mono, monospace, sans-serif';
+                ctx.fillStyle = accentColor;
+                ctx.fillText(runner.time, 985, currentY);
+            });
+
+            let footerTag = document.getElementById('hashtagInput').value.trim() || "";
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(footerTag, 1080 / 2, 1025);
+
+            const previewImg = document.getElementById('instagramPreviewImage');
+            previewImg.src = canvas.toDataURL('image/png');
+        }
+
+        // Core UI Handlers
+        function downloadInstagramGraphic() {
+            const canvas = document.getElementById('instagramCanvas');
+            const school = document.getElementById('schoolSelector').value || "Team";
+            const tag = document.getElementById('genderTagInput').value.trim() || "Results";
+            
+            const link = document.createElement('a');
+            link.download = `XC_Meet_Graphic_${school.replace(/\s+/g, '_')}_${tag.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function copyPostToClipboard(elementId, buttonEl) {
+            const textarea = document.getElementById(elementId);
+            textarea.select();
+            navigator.clipboard.writeText(textarea.value);
+            const baseLabel = buttonEl.innerText;
+            buttonEl.innerText = "✅ Copied!";
+            setTimeout(() => { buttonEl.innerText = baseLabel; }, 1500);
+        }
+    </script>
+</body>
+</html>
