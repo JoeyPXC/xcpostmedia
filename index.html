@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +18,7 @@
             <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-amber-400 flex items-center justify-center gap-2">
                 ⚡ <span>XC TWEETS & GRAMS</span>
             </h1>
-            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">High-density cross country data formatted instantly for graphics & text. · v1.5</p>
+            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">High-density cross country data formatted instantly for graphics & text. · v2.0</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
@@ -45,6 +46,11 @@
                             <label class="block text-xs font-semibold text-gray-400 mb-1">Meet Name <span class="text-[10px] text-gray-500 font-normal">(shown on graphics)</span></label>
                             <input type="text" id="meetNameInput" oninput="renderSocialPost();" placeholder="e.g. Stark County Championships"
                                    class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400 text-white placeholder-gray-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Live Results URL <span class="text-[10px] text-gray-500 font-normal">(Optional)</span></label>
+                            <input type="text" id="linkInput" oninput="renderSocialPost();" placeholder="e.g. live.athletic.net/meets/..." 
+                                   class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-amber-400 text-white placeholder-gray-600">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -190,7 +196,7 @@
         let rosterDepthLimit = 5; 
         let logoLeftImg = null;
         let logoRightImg = null;
-        let bgCanvasImg = null; // Memory allocation for the transparent background template image
+        let bgCanvasImg = null; 
 
         function handleLogoUpload(input, side) {
             const file = input.files[0];
@@ -286,7 +292,6 @@
             if (document.getElementById('schoolSelector').value) renderSocialPost();
         }
 
-        // Flips "Last, First" into "First Last" cleanly
         function cleanNameFormat(nameStr) {
             if (nameStr.includes(',')) {
                 const parts = nameStr.split(',');
@@ -297,7 +302,6 @@
             return nameStr;
         }
 
-        // Appends English ordinal rules (e.g. 3rd, 6th, 102nd)
         function getOrdinalSuffix(number) {
             const j = number % 10, k = number % 100;
             if (j === 1 && k !== 11) return number + "st";
@@ -306,7 +310,6 @@
             return number + "th";
         }
 
-        // Converts MM:SS.hh into pure total seconds
         function timeStringToSeconds(timeStr) {
             const parts = timeStr.split(':');
             if (parts.length === 2) {
@@ -317,7 +320,6 @@
             return parseFloat(parts[0]) || 0;
         }
 
-        // Converts seconds back into MM:SS.hh
         function secondsToTimeString(totalSeconds) {
             if (isNaN(totalSeconds) || totalSeconds <= 0) return "N/A";
             const mins = Math.floor(totalSeconds / 60);
@@ -326,7 +328,6 @@
             return `${mins}:${paddedSecs}`;
         }
 
-        // PARSER ENGINE FOR CROSS COUNTRY TEXT
         function processXCResultsData() {
             const rawText = document.getElementById('rawResults').value.trim();
             if (!rawText) {
@@ -362,7 +363,6 @@
                 parsedXCStore[schoolName].runners.push(runner);
             }
 
-            // Parse Team Standing Box Block
             const teamBlockRegex = /^\s*(\d+)\s+(.+?)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+/gm;
             let teamMatch;
 
@@ -401,7 +401,6 @@
             renderSocialPost();
         }
 
-        // GENERATION & LAYOUT COMPILER
         function renderSocialPost() {
             const targetSchool = document.getElementById('schoolSelector').value;
             if (!targetSchool || !parsedXCStore[targetSchool]) return;
@@ -409,12 +408,12 @@
             const teamData = parsedXCStore[targetSchool];
             const meetName = document.getElementById('meetNameInput').value.trim() || "XC Invitational";
             const hashtag = document.getElementById('hashtagInput').value.trim();
+            const resultsUrl = document.getElementById('linkInput').value.trim();
             const genderTag = document.getElementById('genderTagInput').value.trim() || "Varsity";
 
             const sortedRoster = [...teamData.runners].sort((a, b) => a.place - b.place);
             const displayRoster = sortedRoster.slice(0, rosterDepthLimit);
 
-            // MANUALLY CALCULATE TRUE TOP 5 AVERAGE TIME
             let calculatedAverageStr = "N/A";
             if (sortedRoster.length >= 5) {
                 let totalSeconds = 0;
@@ -424,7 +423,6 @@
                 calculatedAverageStr = secondsToTimeString(totalSeconds / 5);
             }
 
-            // 1. Compile Social Text Box (Score, Place, and the Top 5 Runners Included)
             let textPost = `🚨 ${meetName.toUpperCase()} 🚨\n`;
             textPost += `🏃‍♂️ ${targetSchool.toUpperCase()} - ${genderTag}\n\n`;
             if (teamData.rank) {
@@ -438,11 +436,11 @@
                 textPost += `${getOrdinalSuffix(sortedRoster[i].place)} - ${sortedRoster[i].name} (${sortedRoster[i].time})\n`;
             }
 
-            if (hashtag) textPost += `\n${hashtag}`;
+            if (resultsUrl) textPost += `\n📊 Live Results: ${resultsUrl}\n`;
+            if (hashtag) textPost += (resultsUrl ? '' : '\n') + hashtag;
 
             document.getElementById('outputPostText').value = textPost;
             
-            // Character Counter update
             const counter = document.getElementById('charCounter');
             counter.innerText = `${textPost.length}/280`;
             if (textPost.length > 280) {
@@ -451,7 +449,6 @@
                 counter.className = "text-xs font-mono px-2 py-0.5 bg-gray-900 rounded text-gray-400";
             }
 
-            // 2. Compile Instagram Graphic Preview
             drawInstagramGraphicCanvas(meetName, targetSchool, genderTag, teamData, displayRoster, calculatedAverageStr);
         }
 
@@ -462,18 +459,14 @@
             const accentColor = document.getElementById('accentColorPicker').value;
             const bgColor = document.getElementById('bgColorPicker').value;
 
-            // Base Background Color Fill
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, 1080, 1080);
 
-            // Conditional transparent full-canvas cover background drawing process
             if (bgCanvasImg) {
                 ctx.save();
-                // Extract alpha modifier from range slider element
                 const opacityPercent = parseFloat(document.getElementById('bgOpacitySlider').value) / 100;
                 ctx.globalAlpha = opacityPercent;
                 
-                // Aspect Fill / Cover Math calculation
                 const canvasAspect = 1080 / 1080;
                 const imgAspect = bgCanvasImg.width / bgCanvasImg.height;
                 let drawX = 0, drawY = 0, drawW = 1080, drawH = 1080;
@@ -490,63 +483,59 @@
                 ctx.restore();
             }
 
-            // Borders
+            // Outer Frame Border — Bold 4px line
             ctx.strokeStyle = accentColor;
             ctx.lineWidth = 4;
-            ctx.strokeRect(25, 25, 1030, 1030);
+            ctx.strokeRect(35, 35, 1010, 1010);
 
-            // Title Header Cards
             ctx.fillStyle = '#ffffff';
             ctx.font = 'black 26px sans-serif';
             ctx.textBaseline = 'top';
             ctx.textAlign = 'center';
-            ctx.fillText(meetName.toUpperCase(), 1080 / 2, 65);
+            ctx.fillText(meetName.toUpperCase(), 1080 / 2, 75);
 
             ctx.fillStyle = accentColor;
             ctx.font = '950 64px sans-serif';
-            ctx.fillText(school.toUpperCase(), 1080 / 2, 115);
+            ctx.fillText(school.toUpperCase(), 1080 / 2, 125);
 
             ctx.fillStyle = '#94a3b8';
             ctx.font = 'bold 28px sans-serif';
-            ctx.fillText(genderTag.toUpperCase(), 1080 / 2, 195);
+            ctx.fillText(genderTag.toUpperCase(), 1080 / 2, 205);
 
             drawLogosOnCanvas(ctx);
 
-            // Metadata Box
-            let bannerY = 250;
-            ctx.fillStyle = 'rgba(255,255,255,0.03)';
-            ctx.fillRect(60, bannerY, 960, 100);
-            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            let bannerY = 265;
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            ctx.fillRect(80, bannerY, 920, 80);
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
             ctx.lineWidth = 1;
-            ctx.strokeRect(60, bannerY, 960, 100);
+            ctx.strokeRect(80, bannerY, 920, 80);
 
             if (teamData.rank) {
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#ffffff';
                 ctx.font = '800 24px sans-serif';
-                ctx.fillText(`TEAM RANK: ${getOrdinalSuffix(teamData.rank).toUpperCase()}`, 90, bannerY + 36);
+                ctx.fillText(`TEAM RANK: ${getOrdinalSuffix(teamData.rank).toUpperCase()}`, 110, bannerY + 26);
 
                 ctx.textAlign = 'center';
                 ctx.fillStyle = accentColor;
-                ctx.fillText(`SCORE: ${teamData.score} PTS`, 1080 / 2, bannerY + 36);
+                ctx.fillText(`SCORE: ${teamData.score} PTS`, 1080 / 2, bannerY + 26);
 
                 ctx.textAlign = 'right';
                 ctx.fillStyle = '#ffffff';
-                ctx.fillText(`TOP 5 AVG: ${calculatedAverageStr}`, 990, bannerY + 36);
+                ctx.fillText(`TOP 5 AVG: ${calculatedAverageStr}`, 970, bannerY + 26);
             } else {
                 ctx.textAlign = 'center';
                 ctx.fillStyle = '#94a3b8';
                 ctx.font = 'italic bold 24px sans-serif';
-                ctx.fillText("INDIVIDUAL ROSTER BREAKDOWN SUMMARY", 1080 / 2, bannerY + 36);
+                ctx.fillText("INDIVIDUAL ROSTER BREAKDOWN SUMMARY", 1080 / 2, bannerY + 26);
             }
 
-            // Scoreboard Grid Alignments (Explicitly Setting Column Centers)
-            let tableStartY = 400;
+            let tableStartY = 395;
             let placeColCenterX = 180;  
             let athleteColCenterX = 540; 
             let timeColCenterX = 900;   
 
-            // High-Contrast Table Header Row Settings
             ctx.fillStyle = '#ffffff'; 
             ctx.font = '900 22px sans-serif'; 
             ctx.textAlign = 'center'; 
@@ -555,41 +544,52 @@
             ctx.fillText("ATHLETE", athleteColCenterX, tableStartY);
             ctx.fillText("TIME", timeColCenterX, tableStartY);
 
-            // Brighter dividing banner rule directly below the high-contrast headers
-            ctx.strokeStyle = 'rgba(255,255,255,0.35)'; 
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)'; 
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(80, tableStartY + 30);
-            ctx.lineTo(1000, tableStartY + 30);
+            ctx.moveTo(80, tableStartY + 35);
+            ctx.lineTo(1000, tableStartY + 35);
             ctx.stroke();
 
-            let startRowY = tableStartY + 70;
-            let rowHeight = rosterDepthLimit === 5 ? 100 : 75;
+            let startRowY = tableStartY + 80;
+            let rowHeight = rosterDepthLimit === 5 ? 105 : 80;
+            const rowBoxH = rosterDepthLimit === 5 ? 88 : 66;
 
             roster.forEach((runner, index) => {
                 let currentY = startRowY + (index * rowHeight);
 
+                // Row Background Blocks - Opacity boosted to 0.15 for better layout presence
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; 
+                ctx.fillRect(80, currentY - (rowBoxH / 2) - 8, 920, rowBoxH);
+                
+                // Left accent vertical indicator bars alternating cleanly between Accent Color and White
                 if (index % 2 === 0) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.015)';
-                    ctx.fillRect(60, currentY - 20, 960, rowHeight - 10);
+                    ctx.fillStyle = accentColor; 
+                } else {
+                    ctx.fillStyle = '#ffffff'; 
                 }
+                ctx.fillRect(80, currentY - (rowBoxH / 2) - 8, 12, rowBoxH);
 
                 ctx.textAlign = 'center';
 
-                // Place Column
+                // Place Column Formatting (Adds parentheses around non-scoring 6th & 7th positions)
                 ctx.font = '900 32px font-mono, monospace, sans-serif';
-                ctx.fillStyle = index < 5 ? accentColor : '#ffffff'; 
-                ctx.fillText(getOrdinalSuffix(runner.place), placeColCenterX, currentY);
+                ctx.fillStyle = accentColor; 
+                
+                let rawPlaceStr = getOrdinalSuffix(runner.place);
+                let finalPlaceDisplay = index >= 5 ? `(${rawPlaceStr})` : rawPlaceStr;
+                
+                ctx.fillText(finalPlaceDisplay, placeColCenterX, currentY - 14);
 
                 // Athlete Name Column
                 ctx.font = '800 32px sans-serif';
                 ctx.fillStyle = '#ffffff';
-                ctx.fillText(runner.name, athleteColCenterX, currentY);
+                ctx.fillText(runner.name, athleteColCenterX, currentY - 14);
 
                 // Finals Performance Time Column
                 ctx.font = '900 32px font-mono, monospace, sans-serif';
                 ctx.fillStyle = accentColor;
-                ctx.fillText(runner.time, timeColCenterX, currentY);
+                ctx.fillText(runner.time, timeColCenterX, currentY - 14);
             });
 
             let footerTag = document.getElementById('hashtagInput').value.trim() || "";
@@ -602,7 +602,6 @@
             previewImg.src = canvas.toDataURL('image/png');
         }
 
-        // Core UI Handlers
         function downloadInstagramGraphic() {
             const canvas = document.getElementById('instagramCanvas');
             const school = document.getElementById('schoolSelector').value || "Team";
