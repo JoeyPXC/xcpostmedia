@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +25,7 @@
                 ⚡ <span>Cross Country Social Media Post Generator</span>
             </h1>
             <p class="text-xs sm:text-sm text-gray-400 mt-1 font-medium tracking-wide">
-                Paste Flat HTML results and generate content instantly
+                Paste Flat HTML, MileSplit, AthleticLIVE, or Athletic.net results — format auto-detected
             </p>
         </header>
 
@@ -212,7 +213,7 @@
                         <span class="text-[10px] text-gray-400 bg-gray-900 px-2 py-0.5 rounded font-semibold border border-gray-700">Accepts MM:SS formats</span>
                     </div>
                     <textarea id="rawResults" rows="6" 
-                              placeholder="Paste individual results and team scores block down here..." 
+                              placeholder="Paste results here — HyTek Flat HTML, MileSplit, AthleticLIVE, or Athletic.net. Format is auto-detected. Press Ctrl+Enter to parse." 
                               onfocus="this.select()"
                               class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-xs font-mono focus:outline-none focus:border-amber-400 text-white placeholder-gray-600 transition-all lg:h-44"></textarea>
                     
@@ -451,18 +452,218 @@
             return `${mins}:${paddedSecs}`;
         }
 
-        function processXCResultsData() {
-            const rawText = document.getElementById('rawResults').value.trim();
-            if (!rawText) {
-                alert("Please paste your raw results data first!");
-                return;
+        // ── Format detection helpers ────────────────────────────────────────────
+
+        // MileSplit: school field contains " - #BibNumber"
+        function detectMileSplit(text) {
+            return (/ - #\d+/.test(text) || /Logo\s*\n/.test(text));
+        }
+
+        // AthleticLIVE: metadata lines like "PR • +1pts • Yr: 12" or "Yr: 11"
+        function detectAthleticLive(text) {
+            return /\bYr:\s*\d+/.test(text) || /PR\s*•.*pts/.test(text) || /SB\s*•.*pts/.test(text);
+        }
+
+        // Athletic.net: "Place  Athlete  Team  Time" column header
+        function detectAthleticNet(text) {
+            return /Place\s+Athlete\s+Team\s+Time/i.test(text);
+        }
+
+        // ── AthleticLIVE parser ─────────────────────────────────────────────────
+        // Block format per runner (after stripping nav/footer junk):
+        //   [place]           ← standalone integer
+        //   [name]            ← "First Last" (may have emoji/badge prefix stripped)
+        //   [school]          ← school name, own line
+        //   [time]            ← MM:SS.ss
+        //   [meta]            ← "PR • +Npts • Yr: 12"  (optional, but almost always present)
+        function parseAthleticLive(rawText) {
+            const store = {};
+
+            // Strip only very specific boilerplate — keep it tight to avoid nuking school names
+            const junkPattern = /^(AthleticLIVE|RUNNERSPACE\+?|AthleticTV|Athletic\.net Home|View Athletic\.net Ad Free|Show All Results|Pending Ratification|Latest Videos|View All Latest Videos|Thanks for supporting|Your support is|Features & Pricing|For Coaches|Event Directors|Athletes, Parents|Get the Athletic|Questions\?|Documentation|Contact Us|RunnerSpace\.com|Athletic\.net -|Search this meet|Official Results|Official Sat,|Boardman Spartan Invitational|HS$|Posts$|Teams$|More$|Charts$|Score Grid|Team Scores|Entries$|Results$|EN-US|Timing First|Timed by|No events are live|Results last updated|Live Webcast|Men's \d|Women's \d|Boys \d|Girls \d|Live$|Home$|Search$|Events$|Follow$|Reports$|Light$|Media$|Facebook$|Twitter$|Instagram$|About$|Pricing$|Features$|© \d+|\d{4} RunnerSpace|\d{4} Athletic\.net).*$/gim;
+            const cleaned = rawText.replace(junkPattern, '').replace(/\r/g, '');
+            const lines = cleaned.split('\n').map(l => l.trim()).filter(Boolean);
+
+            console.log('[AthleticLIVE] lines after cleaning:', lines.slice(0, 30));
+
+            const timeRe    = /^\d{1,2}:\d{2}[.:]\d+$/;
+            const placeRe   = /^\d+$/;
+            const metaRe    = /Yr:\s*[\d]+|^\+\d+pts|\bPR\b|\bSB\b|\bPB\b/;
+            const initialRe = /^[A-Z]{1,3}[\(\)A-Z]{0,2}$/;
+
+            let i = 0;
+            while (i < lines.length) {
+                if (placeRe.test(lines[i])) {
+                    const place = parseInt(lines[i]);
+                    let offset = 1;
+
+                    // Skip optional initials badge line (1-3 uppercase letters)
+                    if (lines[i + offset] && initialRe.test(lines[i + offset])) offset++;
+
+                    const nameLine = lines[i + offset]     || '';
+                    const schLine  = lines[i + offset + 1] || '';
+                    const timeLine = lines[i + offset + 2] || '';
+
+                    const valid = (
+                        nameLine.length > 1 && !placeRe.test(nameLine) && !metaRe.test(nameLine) && !initialRe.test(nameLine) && !timeRe.test(nameLine) &&
+                        schLine.length  > 1 && !placeRe.test(schLine)  && !metaRe.test(schLine)  && !timeRe.test(schLine)  && !initialRe.test(schLine) &&
+                        timeRe.test(timeLine)
+                    );
+
+                    if (valid) {
+                        const name   = cleanNameFormat(nameLine);
+                        const school = schLine;
+                        const time   = timeLine;
+                        if (!store[school]) store[school] = { name: school, runners: [], rank: null, score: null };
+                        store[school].runners.push({ place, name, school, time, year: null, pts: null });
+                        const nextIdx = i + offset + 3;
+                        i = (nextIdx < lines.length && metaRe.test(lines[nextIdx])) ? nextIdx + 1 : nextIdx;
+                        continue;
+                    } else {
+                        console.log(`[AthleticLIVE] skipped place ${place}: name="${nameLine}" school="${schLine}" time="${timeLine}"`);
+                    }
+                }
+                i++;
             }
 
-            parsedXCStore = {};
+            console.log('[AthleticLIVE] schools found:', Object.keys(store));
 
+            // Derive team scores from finishing places (top 5 scorers per school)
+            const allRunners = Object.values(store).flatMap(s => s.runners)
+                .sort((a, b) => a.place - b.place);
+
+            const schoolScorerCount = {};
+            const schoolPoints = {};
+            allRunners.forEach(r => {
+                if (!schoolScorerCount[r.school]) schoolScorerCount[r.school] = 0;
+                if (schoolScorerCount[r.school] < 5) {
+                    schoolScorerCount[r.school]++;
+                    if (!schoolPoints[r.school]) schoolPoints[r.school] = 0;
+                    schoolPoints[r.school] += r.place;
+                }
+            });
+
+            const scoredTeams = Object.entries(schoolPoints)
+                .filter(([sch]) => (store[sch]?.runners.length || 0) >= 5)
+                .sort((a, b) => a[1] - b[1]);
+
+            scoredTeams.forEach(([sch, score], idx) => {
+                store[sch].rank  = idx + 1;
+                store[sch].score = score;
+            });
+
+            return store;
+        }
+
+        // ── MileSplit parser ────────────────────────────────────────────────────
+        function parseMileSplit(rawText) {
+            const store = {};
+
+            // Normalize: remove "Logo" artifact lines, collapse whitespace lines
+            const cleaned = rawText
+                .replace(/^Logo\s*$/gmi, '')
+                .replace(/\r/g, '');
+
+            const lines = cleaned.split('\n').map(l => l.trim()).filter(Boolean);
+
+            // Each result is a block of 3–4 consecutive meaningful lines:
+            //   [place]  [name]  [school - #bib]  [time]
+            // We'll scan for lines that are purely a number (place), then grab next lines.
+            let i = 0;
+            while (i < lines.length) {
+                const placeLine = lines[i];
+                if (/^\d+$/.test(placeLine)) {
+                    const place = parseInt(placeLine);
+                    // next non-empty lines
+                    const nameLine   = lines[i + 1] || '';
+                    const schoolLine = lines[i + 2] || '';
+                    const timeLine   = lines[i + 3] || '';
+
+                    // school line contains " - #NNN"
+                    const schoolMatch = schoolLine.match(/^(.+?)\s+-\s+#\d+/);
+                    const timeMatch   = timeLine.match(/(\d{1,2}:\d{2}(?:\.\d+)?)/);
+
+                    if (schoolMatch && timeMatch && nameLine.length > 1) {
+                        const name   = cleanNameFormat(nameLine.trim());
+                        const school = schoolMatch[1].trim();
+                        const time   = timeMatch[1];
+
+                        if (!store[school]) store[school] = { name: school, runners: [], rank: null, score: null };
+                        store[school].runners.push({ place, name, school, time, year: null, pts: null });
+                        i += 4;
+                        continue;
+                    }
+                }
+
+                // Fallback: try a single-line collapsed format from copy/paste
+                // "1  Ryan Stirm  Rocky River - #1246  15:49.23"
+                const collapsed = /^(\d+)\s+([A-Za-z][A-Za-z\s\.\-\']+?)\s{2,}(.+?)\s+-\s+#\d+\s{2,}(\d{1,2}:\d{2}(?:\.\d+)?)/.exec(placeLine);
+                if (collapsed) {
+                    const place  = parseInt(collapsed[1]);
+                    const name   = cleanNameFormat(collapsed[2].trim());
+                    const school = collapsed[3].trim();
+                    const time   = collapsed[4];
+                    if (!store[school]) store[school] = { name: school, runners: [], rank: null, score: null };
+                    store[school].runners.push({ place, name, school, time, year: null, pts: null });
+                }
+                i++;
+            }
+
+            // Parse Team Scores block if present — MileSplit shows:
+            // "1  CVCA  47  ..."  or via the Team Scores section
+            // Look for lines: rank  TeamName  score
+            const teamScoreRegex = /^(\d+)\s+([A-Za-z][A-Za-z0-9\.\s\-]+?)\s+(\d+)\s*$/gm;
+            let tm;
+            while ((tm = teamScoreRegex.exec(rawText)) !== null) {
+                const tname = tm[2].trim();
+                const rank  = parseInt(tm[1]);
+                const score = parseInt(tm[3]);
+                // Only apply if rank is plausible (≤ number of schools) and score looks right
+                if (rank <= 50 && score <= 500) {
+                    if (store[tname]) {
+                        store[tname].rank  = rank;
+                        store[tname].score = score;
+                    }
+                }
+            }
+
+            return store;
+        }
+
+        // ── Athletic.net parser ─────────────────────────────────────────────────
+        function parseAthleticNet(rawText) {
+            const store = {};
+            // Lines look like: "1   John Smith   Perry   17:05.2"
+            // No year column between name and school.
+            const lineRegex = /^(\d+)\s{2,}([A-Za-z][A-Za-z\s\.\-\']+?)\s{2,}([A-Za-z][A-Za-z0-9\.\s\-\']*?)\s{2,}(\d{1,2}:\d{2}(?:\.\d+)?)/gm;
+            let m;
+            while ((m = lineRegex.exec(rawText)) !== null) {
+                const place  = parseInt(m[1]);
+                const name   = cleanNameFormat(m[2].trim());
+                const school = m[3].trim();
+                const time   = m[4];
+                if (!store[school]) store[school] = { name: school, runners: [], rank: null, score: null };
+                store[school].runners.push({ place, name, school, time, year: null, pts: null });
+            }
+
+            // Team scores: "1  Perry  47  ..."
+            const teamScoreRegex = /^(\d+)\s+([A-Za-z][A-Za-z0-9\.\s\-]+?)\s+(\d+)\s+\d+/gm;
+            let tm;
+            while ((tm = teamScoreRegex.exec(rawText)) !== null) {
+                const tname = tm[2].trim();
+                if (store[tname]) {
+                    store[tname].rank  = parseInt(tm[1]);
+                    store[tname].score = parseInt(tm[3]);
+                }
+            }
+            return store;
+        }
+
+        // ── HyTek / flat HTML parser (original) ────────────────────────────────
+        function parseHyTek(rawText) {
+            const store = {};
             const runnerRegex = /^\s*(\d+)\s+([A-Za-z\s\.,\-\x7f-\xff]+?)\s+(\d+)\s+([A-Za-z0-9\.\s\-]+?)\s+(\d{1,2}:\d{2}(?:\.\d+)?)\s*(\d+)?\s*$/gm;
             let match;
-
             while ((match = runnerRegex.exec(rawText)) !== null) {
                 const runner = {
                     place: parseInt(match[1]),
@@ -472,60 +673,79 @@
                     time: match[5].trim(),
                     pts: match[6] ? parseInt(match[6]) : null
                 };
-
                 const schoolName = runner.school;
-
-                if (!parsedXCStore[schoolName]) {
-                    parsedXCStore[schoolName] = {
-                        name: schoolName,
-                        runners: [],
-                        rank: null,
-                        score: null
-                    };
-                }
-                parsedXCStore[schoolName].runners.push(runner);
+                if (!store[schoolName]) store[schoolName] = { name: schoolName, runners: [], rank: null, score: null };
+                store[schoolName].runners.push(runner);
             }
 
             const teamBlockRegex = /^\s*(\d+)\s+([A-Za-z0-9\.\s\-]+?)\s+(\d+)\s+\d+\s+\d+\s+\d+/gm;
             let teamMatch;
-
             while ((teamMatch = teamBlockRegex.exec(rawText)) !== null) {
                 const teamName = teamMatch[2].trim();
-
-                if (!parsedXCStore[teamName]) {
-                    parsedXCStore[teamName] = {
-                        name: teamName,
-                        runners: []
-                    };
-                }
-
-                parsedXCStore[teamName].rank = parseInt(teamMatch[1]);
-                parsedXCStore[teamName].score = parseInt(teamMatch[3]);
+                if (!store[teamName]) store[teamName] = { name: teamName, runners: [] };
+                store[teamName].rank  = parseInt(teamMatch[1]);
+                store[teamName].score = parseInt(teamMatch[3]);
             }
+            return store;
+        }
+
+        // ── Master entry point ──────────────────────────────────────────────────
+        function processXCResultsData() {
+            const rawText = document.getElementById('rawResults').value.trim();
+            if (!rawText) {
+                alert("Please paste your raw results data first!");
+                return;
+            }
+
+            // Detect format and parse accordingly
+            let detectedFormat = 'hytek';
+            if (detectMileSplit(rawText))         detectedFormat = 'milesplit';
+            else if (detectAthleticLive(rawText)) detectedFormat = 'athletic_live';
+            else if (detectAthleticNet(rawText))  detectedFormat = 'athletic_net';
+
+            if (detectedFormat === 'milesplit')        parsedXCStore = parseMileSplit(rawText);
+            else if (detectedFormat === 'athletic_live') parsedXCStore = parseAthleticLive(rawText);
+            else if (detectedFormat === 'athletic_net')  parsedXCStore = parseAthleticNet(rawText);
+            else                                         parsedXCStore = parseHyTek(rawText);
 
             const schoolSelector = document.getElementById('schoolSelector');
             schoolSelector.innerHTML = '';
 
             const availableSchools = Object.keys(parsedXCStore).sort();
             if (availableSchools.length === 0) {
-                alert("Could not detect any school results structure. Please double check standard result text spacing column format!");
+                alert(`Could not detect any school results.\nFormat detected: ${detectedFormat.toUpperCase()}\nPlease check your pasted text.`);
                 return;
             }
 
             availableSchools.forEach(sch => {
-                if(parsedXCStore[sch].runners.length === 0 && !parsedXCStore[sch].rank) return;
-                
+                if (parsedXCStore[sch].runners.length === 0 && !parsedXCStore[sch].rank) return;
                 const opt = document.createElement('option');
                 opt.value = sch;
-                const meta = parsedXCStore[sch].rank ? `(Rank #${parsedXCStore[sch].rank})` : `(${parsedXCStore[sch].runners.length} Finisher(s))`;
+                const meta = parsedXCStore[sch].rank
+                    ? `(Rank #${parsedXCStore[sch].rank})`
+                    : `(${parsedXCStore[sch].runners.length} Finisher(s))`;
                 opt.innerText = `${sch} ${meta}`;
                 schoolSelector.appendChild(opt);
             });
 
-            const meetLines = rawText.split('\n');
-            if(meetLines[0] && meetLines[0].trim().length > 4 && !meetLines[0].includes('===')) {
-                document.getElementById('meetNameInput').value = meetLines[0].trim();
-            }
+            // Try to extract meet name from the pasted text
+            const meetLines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+            // For MileSplit the meet name often appears near "Invitational" / "Championship"
+            const meetNameLine = meetLines.find(l =>
+                l.length > 6 &&
+                !l.includes('===') &&
+                !/^\d+$/.test(l) &&
+                !/Logo/i.test(l) &&
+                !/Place\s+Athlete/i.test(l) &&
+                !/Finals|Section|Scored/i.test(l) &&
+                (l.includes('Invitational') || l.includes('Championship') || l.includes('Meet') || l.includes('Classic') || meetLines.indexOf(l) < 4)
+            );
+            if (meetNameLine) document.getElementById('meetNameInput').value = meetNameLine;
+
+            // Show a small badge in the textarea label indicating detected format
+            const formatLabels = { milesplit: '🟦 MileSplit', athletic_live: '🟣 AthleticLIVE', athletic_net: '🟩 Athletic.net', hytek: '🟧 HyTek / Flat HTML' };
+            document.querySelector('#rawResults').parentElement.querySelector('h2').innerHTML =
+                `2. Paste Raw XC Meet Data &nbsp;<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-700 text-amber-300">${formatLabels[detectedFormat]}</span>`;
 
             document.getElementById('dashboardSection').classList.remove('hidden');
             handleSchoolChange();
@@ -858,6 +1078,13 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
+
+        document.getElementById('rawResults').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                processXCResultsData();
+            }
+        });
 
         function copyPostToClipboard(elementId, buttonEl) {
             const textarea = document.getElementById(elementId);
