@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -90,6 +88,17 @@
                                    class="w-full bg-black border border-gray-600 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#ffdd00] text-white placeholder-gray-600">
                         </div>
                         
+                        <div class="flex flex-col gap-2 p-2 bg-black rounded-lg border border-gray-800">
+                            <label class="flex items-center justify-between text-xs font-semibold text-gray-300 cursor-pointer select-none">
+                                <span>Show PR / SB next to times <span class="text-[10px] text-gray-500 font-normal">(when the paste has it)</span></span>
+                                <input type="checkbox" id="showFlagsToggle" checked onchange="renderSocialPost();">
+                            </label>
+                            <label class="flex items-center justify-between text-xs font-semibold text-gray-300 cursor-pointer select-none">
+                                <span>Show grade (Sr, Jr, So, Fr) <span class="text-[10px] text-gray-500 font-normal">(when the paste has it)</span></span>
+                                <input type="checkbox" id="showGradeToggle" onchange="renderSocialPost();">
+                            </label>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 mb-1">Accent Color</label>
@@ -525,9 +534,12 @@
                         const school = schLine;
                         const time   = timeLine;
                         if (!store[school]) store[school] = { name: school, runners: [], rank: null, score: null };
-                        store[school].runners.push({ place, name, school, time, year: null, pts: null });
                         const nextIdx = i + offset + 3;
-                        i = (nextIdx < lines.length && metaRe.test(lines[nextIdx])) ? nextIdx + 1 : nextIdx;
+                        const metaText = (nextIdx < lines.length && metaRe.test(lines[nextIdx])) ? lines[nextIdx] : '';
+                        const yrMatch = metaText.match(/Yr:\s*(\d+)/);
+                        const flag = /\b(PB|PR)\b/.test(metaText) ? 'PR' : (/\bSB\b/.test(metaText) ? 'SB' : '');
+                        store[school].runners.push({ place, name, school, time, year: yrMatch ? parseInt(yrMatch[1], 10) : null, flag, pts: null });
+                        i = metaText ? nextIdx + 1 : nextIdx;
                         continue;
                     } else {
                         console.log(`[AthleticLIVE] skipped place ${place}: name="${nameLine}" school="${schLine}" time="${timeLine}"`);
@@ -741,16 +753,25 @@
             // Try to extract meet name from the pasted text
             const meetLines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
             // For MileSplit the meet name often appears near "Invitational" / "Championship"
-            const meetNameLine = meetLines.find(l =>
-                l.length > 6 &&
-                !l.includes('===') &&
-                !/^\d+$/.test(l) &&
-                !/Logo/i.test(l) &&
-                !/Place\s+Athlete/i.test(l) &&
-                !/Finals|Section|Scored/i.test(l) &&
-                (l.includes('Invitational') || l.includes('Championship') || l.includes('Meet') || l.includes('Classic') || meetLines.indexOf(l) < 4)
-            );
+            const notMeetName = l =>
+                l.length <= 6 || l.includes('===') || /^\d+$/.test(l) || /Logo/i.test(l) ||
+                /Place\s+Athlete/i.test(l) || /Finals|Section|Scored/i.test(l) ||
+                /^(athletic\.net|\+|search|cross country|racepenguin|results|team scores|charts|official|timed by|show all)/i.test(l) ||
+                /^(mens|womens|men's|women's|boys|girls)\b/i.test(l) ||
+                /followers?\b|,\s*[A-Z]{2}\s+US$/i.test(l);
+            const meetKeyword = /invitational|championships?|classic|\bmeet\b|league|relays|\bopen\b|showdown|festival|regional|sectional|district|state|jamboree|\bduals?\b/i;
+            // Prefer a line that looks like a meet name; only then fall back to an early line that isn't site junk
+            const meetNameLine = meetLines.find(l => !notMeetName(l) && meetKeyword.test(l))
+                || meetLines.slice(0, 8).find(l => !notMeetName(l));
             if (meetNameLine) document.getElementById('meetNameInput').value = meetNameLine;
+
+            // Fill the gender/division tag from the paste (e.g. "Mens 5,000 Meters Boys Varsity" -> "Boys Varsity")
+            const genderMatch = rawText.match(/\b(Boys|Girls|Men'?s|Women'?s)\s+(Varsity|JV|Junior Varsity|Freshman|Frosh|Open|Novice|Middle School)\b/i);
+            if (genderMatch) {
+                const g = /^(boys|men)/i.test(genderMatch[1]) ? 'Boys' : 'Girls';
+                const d = genderMatch[2].replace(/\b[a-z]/g, c => c.toUpperCase());
+                document.getElementById('genderTagInput').value = `${g} ${d}`;
+            }
 
             // Show a small badge in the textarea label indicating detected format
             const formatLabels = { milesplit: '🟦 MileSplit', athletic_live: '🟣 AthleticLIVE', athletic_net: '🟩 Athletic.net', hytek: '🟧 HyTek / Flat HTML' };
@@ -820,8 +841,14 @@
             
             textPost += `📋 Top Scorers:\n`;
             const tweetRosterLimit = Math.min(sortedRoster.length, 5);
+            const showFlags = document.getElementById('showFlagsToggle').checked;
+            const showGrade = document.getElementById('showGradeToggle').checked;
             for (let i = 0; i < tweetRosterLimit; i++) {
-                textPost += `${getOrdinalSuffix(sortedRoster[i].place)} - ${sortedRoster[i].name} (${sortedRoster[i].time})\n`;
+                const r = sortedRoster[i];
+                const gradeWord = { 12: 'Sr', 11: 'Jr', 10: 'So', 9: 'Fr' }[r.year];
+                const gradeTxt = (showGrade && gradeWord) ? `, ${gradeWord}` : '';
+                const flagTxt = (showFlags && r.flag) ? ` ${r.flag}` : '';
+                textPost += `${getOrdinalSuffix(r.place)} - ${r.name}${gradeTxt} (${r.time}${flagTxt})\n`;
             }
 
             if (resultsUrl) textPost += `\n📊 Live Results: ${resultsUrl}\n`;
