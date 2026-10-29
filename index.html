@@ -93,10 +93,6 @@
                                 <span>Show PR / SB next to times <span class="text-[10px] text-gray-500 font-normal">(when the paste has it)</span></span>
                                 <input type="checkbox" id="showFlagsToggle" checked onchange="renderSocialPost();">
                             </label>
-                            <label class="flex items-center justify-between text-xs font-semibold text-gray-300 cursor-pointer select-none">
-                                <span>Show grade (Sr, Jr, So, Fr) <span class="text-[10px] text-gray-500 font-normal">(when the paste has it)</span></span>
-                                <input type="checkbox" id="showGradeToggle" onchange="renderSocialPost();">
-                            </label>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -833,7 +829,8 @@
             }
 
             let textPost = `🚨 ${meetName.toUpperCase()} 🚨\n`;
-            textPost += `🏃‍♂️ ${schoolDisplayName.toUpperCase()} - ${genderTag}\n\n`;
+            const runnerEmoji = /girl|women/i.test(genderTag) ? '🏃‍♀️' : '🏃‍♂️';
+            textPost += `${runnerEmoji} ${schoolDisplayName.toUpperCase()} - ${genderTag}\n\n`;
             if (teamData.rank) {
                 textPost += `🏆 Team Finish: ${getOrdinalSuffix(teamData.rank)}\n`;
                 textPost += `📊 Total Score: ${teamData.score} pts\n\n`;
@@ -842,13 +839,10 @@
             textPost += `📋 Top Scorers:\n`;
             const tweetRosterLimit = Math.min(sortedRoster.length, 5);
             const showFlags = document.getElementById('showFlagsToggle').checked;
-            const showGrade = document.getElementById('showGradeToggle').checked;
             for (let i = 0; i < tweetRosterLimit; i++) {
                 const r = sortedRoster[i];
-                const gradeWord = { 12: 'Sr', 11: 'Jr', 10: 'So', 9: 'Fr' }[r.year];
-                const gradeTxt = (showGrade && gradeWord) ? `, ${gradeWord}` : '';
                 const flagTxt = (showFlags && r.flag) ? ` ${r.flag}` : '';
-                textPost += `${getOrdinalSuffix(r.place)} - ${r.name}${gradeTxt} (${r.time}${flagTxt})\n`;
+                textPost += `${getOrdinalSuffix(r.place)} - ${r.name} ${r.time}${flagTxt}\n`;
             }
 
             if (resultsUrl) textPost += `\n📊 Live Results: ${resultsUrl}\n`;
